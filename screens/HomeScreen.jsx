@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
-import {StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Platform} from 'react-native';
+import {StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Platform, ActivityIndicator} from 'react-native';
 
 import axios from 'axios';
 import {formatDistanceToNowStrict} from "date-fns";
@@ -10,6 +10,8 @@ import formatDistance from '../helpers/formatDistanceCustom';
 
 export default function HomeScreen({navigation}) {
     const [data, setData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     
     useEffect(() => {
         getAllTweets();
@@ -22,11 +24,20 @@ export default function HomeScreen({navigation}) {
         axiosInt.get('https://1a9b-149-143-60-69.ngrok.io/api/tweets')
             .then(response => {
                 setData(response.data);
+                setIsLoading(false);
+                setIsRefreshing(false);
             })
             .catch(error => {
                 console.log('dfjlsf;jsafjasdksjdklfjkl;afjsdklafj;lsajfsd;fasj');
+                setIsLoading(false);
+                setIsRefreshing(false);
             });
     }
+
+    function handleRefresh() {
+        setIsRefreshing(true);
+        getAllTweets();
+    };
 
     const Item = ({ title }) => (
         <View style={styles.item}>
@@ -119,12 +130,18 @@ export default function HomeScreen({navigation}) {
 
     return (
         <View style={styles.container}>
+            {isLoading ? (
+            <ActivityIndicator style={{ marginTop: 8 }} size="large" color="#b100e2"/>
+                ) : (
             <FlatList
                 data={data}
                 renderItem={renderItem}
-                keyExtractor={item => item.id}
-                ItemSeparatorComponent={() => <View style={styles.tweetSeparator}/>}
+                keyExtractor={item => item.id.toString()}
+                ItemSeparatorComponent={() => (<View style={styles.tweetSeparator}/>)}
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
             />
+                )}
             <TouchableOpacity
                 style={styles.floatingButton}
                 onPress={() => gotoNewTweet()}
