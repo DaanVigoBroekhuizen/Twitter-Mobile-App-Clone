@@ -90,7 +90,7 @@ export default function ProfileScreen() {
                 <TouchableOpacity style={styles.linkItem} onPress={() => Linking.openURL('https://laracast.com')}
                 >
                     <EvilIcons name="link" size={24} color="gray"/>
-                    <Text style={styles.linkColor}>laracast.com</Text>
+                    <Text style={styles.linkColor}>laracasts.com</Text>
                 </TouchableOpacity>
                 <View style={[styles.linkItem, styles.ml4]}>
                     <EvilIcons name="calendar" size={24} color="gray"/>
