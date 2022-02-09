@@ -1,5 +1,5 @@
 import React from 'react';
-import {StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Platform} from 'react-native';
+import {StyleSheet, View, Text, Image, TouchableOpacity, Platform} from 'react-native';
 
 import { Entypo } from '@expo/vector-icons';
 import { EvilIcons } from '@expo/vector-icons';
