@@ -1,51 +1,32 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
 import {StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Platform} from 'react-native';
 
+import axios from 'axios';
+import {formatDistanceToNowStrict} from "date-fns";
+import locale from 'date-fns/locale/en-US';
+import formatDistance from '../helpers/formatDistanceCustom';
+
 export default function HomeScreen({navigation}) {
-    const DATA = [
-        {
-            id: '1',
-            title: 'First Item'
-        },
-        {
-            id: '2',
-            title: 'Second Item'
-        },
-        {
-            id: '3',
-            title: 'Third Item'
-        },
-        {
-            id: '4',
-            title: 'Fourth Item'
-        },
-        {
-            id: '5',
-            title: 'Fifth Item'
-        },
-        {
-            id: '6',
-            title: 'Sixth Item'
-        },
-        {
-            id: '7',
-            title: 'Seventh Item'
-        },
-        {
-            id: '8',
-            title: 'Eight Item'
-        },
-        {
-            id: '9',
-            title: 'Ninth Item'
-        },
-        {
-            id: '10',
-            title: 'Tenth Item'
-        },
-    ]
+    const [data, setData] = useState([]);
+    
+    useEffect(() => {
+        getAllTweets();
+    }, []);
+
+    const axiosInt = axios.create();
+
+    function getAllTweets() {
+        // instance.get('http://localhost/api/tweets')
+        axiosInt.get('https://1a9b-149-143-60-69.ngrok.io/api/tweets')
+            .then(response => {
+                setData(response.data);
+            })
+            .catch(error => {
+                console.log('dfjlsf;jsafjasdksjdklfjkl;afjsdklafj;lsajfsd;fasj');
+            });
+    }
 
     const Item = ({ title }) => (
         <View style={styles.item}>
@@ -65,26 +46,31 @@ export default function HomeScreen({navigation}) {
         navigation.navigate('New Tweet');
     }
 
-    const renderItem = ({ item }) => (
+    const renderItem = ({ item: tweet }) => (
         <View style={styles.tweetContainer}>
             <TouchableOpacity onPress={() => gotoProfile()}>
                 <Image style={styles.avatar} source={{
-                    uri: 'https://reactnative.dev/img/tiny_logo.png',
+                    uri: tweet.user.avatar,
                 }}
                 />
             </TouchableOpacity>
             <View style={{ flex: 1}}>
                 <TouchableOpacity style={styles.flexRow} onPress={() => gotoSingleTweet()}>
-                    <Text numberOfLines={1} style={styles.tweetName}>{item.title}</Text>
-                    <Text numberOfLines={1} style={styles.tweetHandle}>@daanhimself</Text>
+                    <Text numberOfLines={1} style={styles.tweetName}>{tweet.user.name}</Text>
+                    <Text numberOfLines={1} style={styles.tweetHandle}>@{tweet.user.username}</Text>
                     <Text>&middot;</Text>
-                    <Text numberOfLines={1} style={styles.tweetHandle}>9m</Text>
+                    <Text numberOfLines={1} style={styles.tweetHandle}>
+                        {formatDistanceToNowStrict(new Date(tweet.created_at), {
+                            locale: {
+                                ...locale,
+                                formatDistance,
+                            },
+                        })}
+                    </Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.tweetContentContainer} onPress={() => gotoSingleTweet()}>
                     <Text style={styles.tweetContent}>
-                        Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                        Alias consequatur cupiditate illum incidunt laborum placeat
-                        quisquam recusandae reprehenderit sit voluptas!
+                        {tweet.body}
                     </Text>
                 </TouchableOpacity>
                 <View style={styles.tweetEngagement}>
@@ -134,7 +120,7 @@ export default function HomeScreen({navigation}) {
     return (
         <View style={styles.container}>
             <FlatList
-                data={DATA}
+                data={data}
                 renderItem={renderItem}
                 keyExtractor={item => item.id}
                 ItemSeparatorComponent={() => <View style={styles.tweetSeparator}/>}
