@@ -13,15 +13,33 @@ import {
 import {EvilIcons} from "@expo/vector-icons";
 import axiosConfig from "../helpers/axiosConfig";
 import {format} from "date-fns";
+import RenderItem from "../components/RenderItem";
 
 
 export default function ProfileScreen({ route, navigation }) {
+    const [data, setData] = useState([]);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [page, setPage] = useState(1);
+    const [isAtEndOfScrolling, setisAtEndOfScrolling] = useState(false);
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingTweets, setIsLoadingTweets] = useState(true);
 
     useEffect(() => {
         getUserProfile();
-    }, []);
+        getUserTweets();
+    }, [page]);
+
+    function handleEnd() {
+        setPage(page + 1);
+    }
+
+    function handleRefresh() {
+        setPage(1);
+        setisAtEndOfScrolling(false);
+        setIsRefreshing(true);
+        getUserTweets();
+    };
 
     function getUserProfile() {
         axiosConfig
@@ -37,48 +55,28 @@ export default function ProfileScreen({ route, navigation }) {
             });
     }
 
-    const DATA = [
-        {
-            id: '1',
-            title: 'First Item'
-        },
-        {
-            id: '2',
-            title: 'Second Item'
-        },
-        {
-            id: '3',
-            title: 'Third Item'
-        },
-        {
-            id: '4',
-            title: 'Fourth Item'
-        },
-        {
-            id: '5',
-            title: 'Fifth Item'
-        },
-        {
-            id: '6',
-            title: 'Sixth Item'
-        },
-        {
-            id: '7',
-            title: 'Seventh Item'
-        },
-        {
-            id: '8',
-            title: 'Eight Item'
-        },
-        {
-            id: '9',
-            title: 'Ninth Item'
-        },
-        {
-            id: '10',
-            title: 'Tenth Item'
-        },
-    ]
+    function getUserTweets() {
+        axiosConfig.get(`/users/${route.params.userId}/tweets?page=${page}`)
+            .then(response => {
+                if (page === 1) {
+                    setData(response.data.data);
+                } else {
+                    setData([...data, ...response.data.data]);
+                }
+
+                if (!response.data.next_page_url) {
+                    setisAtEndOfScrolling(true)
+                }
+
+                setIsLoadingTweets(false);
+                setIsRefreshing(false);
+            })
+            .catch(error => {
+                console.log('dfjlsf;jsafjasdksjdklfjkl;afjsdklafj;lsajfsd;fasj');
+                setIsLoadingTweets(false);
+                setIsRefreshing(false);
+            });
+    }
 
     const renderItem = ({ item }) => (
         <View style={{ marginVertical: 20 }}>
@@ -153,14 +151,28 @@ export default function ProfileScreen({ route, navigation }) {
     );
 
     return (
+        <View style={styles.container}>
+
+        {isLoading ? (
+                <ActivityIndicator style={{ marginTop: 8 }} size="large" color="#b100e2"/>
+            ) : (
         <FlatList
-            style={styles.container}
-            data={DATA}
-            renderItem={renderItem}
-            keyExtractor={item => item.id}
+            data={data}
+            renderItem={props => <RenderItem {...props} />}
+            keyExtractor={item => item.id.toString()}
             ItemSeparatorComponent={() => <View style={styles.separator}/>}
             ListHeaderComponent={ProfileHeader}
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            onEndReached={handleEnd}
+            onEndReachedThreshold={0}
+            ListFooterComponent={() => !isAtEndOfScrolling && (
+                <ActivityIndicator size="large" color="#b100e2" />
+            )}
+            scrollIndicatorInsets={{ right: 1 }}
         />
+            )}
+        </View>
     );
 }
 
