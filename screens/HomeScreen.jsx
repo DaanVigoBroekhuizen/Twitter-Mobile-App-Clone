@@ -1,7 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import { EvilIcons } from '@expo/vector-icons';
 import { AntDesign } from '@expo/vector-icons';
-import {StyleSheet, View, Text, FlatList, Image, TouchableOpacity, Platform, ActivityIndicator} from 'react-native';
+import {
+    StyleSheet,
+    View,
+    Text,
+    FlatList,
+    Image,
+    TouchableOpacity,
+    Platform,
+    ActivityIndicator,
+    ActivityIndicatorComponent
+} from 'react-native';
 
 import axios from 'axios';
 import {formatDistanceToNowStrict} from "date-fns";
@@ -12,18 +22,29 @@ export default function HomeScreen({navigation}) {
     const [data, setData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [page, setPage] = useState(1);
+    const [isAtEndOfScrolling, setisAtEndOfScrolling] = useState(false);
     
     useEffect(() => {
         getAllTweets();
-    }, []);
+    }, [page]);
 
     const axiosInt = axios.create();
 
     function getAllTweets() {
         // instance.get('http://localhost/api/tweets')
-        axiosInt.get('https://1a9b-149-143-60-69.ngrok.io/api/tweets')
+        axiosInt.get(`https://3022-149-143-60-69.ngrok.io/api/tweets?page=${page}`)
             .then(response => {
-                setData(response.data);
+                if (page === 1) {
+                    setData(response.data.data);
+                } else {
+                    setData([...data, ...response.data.data]);
+                }
+
+                if (!response.data.next_page_url) {
+                    setisAtEndOfScrolling(true)
+                }
+
                 setIsLoading(false);
                 setIsRefreshing(false);
             })
@@ -35,6 +56,8 @@ export default function HomeScreen({navigation}) {
     }
 
     function handleRefresh() {
+        setPage(1);
+        setisAtEndOfScrolling(false);
         setIsRefreshing(true);
         getAllTweets();
     };
@@ -44,6 +67,10 @@ export default function HomeScreen({navigation}) {
             <Text style={styles.title}>{title}</Text>
         </View>
     );
+
+    function handleEnd() {
+        setPage(page + 1);
+    }
 
     function gotoProfile() {
         navigation.navigate('Profile Screen');
@@ -140,6 +167,11 @@ export default function HomeScreen({navigation}) {
                 ItemSeparatorComponent={() => (<View style={styles.tweetSeparator}/>)}
                 refreshing={isRefreshing}
                 onRefresh={handleRefresh}
+                onEndReached={handleEnd}
+                onEndReachedThreshold={0}
+                ListFooterComponent={() => !isAtEndOfScrolling && (
+                    <ActivityIndicator size="large" color="#b100e2" />
+                )}
             />
                 )}
             <TouchableOpacity
